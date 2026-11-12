@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="pt-BR">
 <head>
@@ -13,6 +14,7 @@ header{padding:22px;background:linear-gradient(135deg,#32185b,#171027)}
 h1{margin:0}
 main{max-width:850px;margin:auto;padding:16px}
 button{background:#8050cf;color:white;border:0;border-radius:9px;padding:11px 14px;font-weight:bold;margin:4px;cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
 .alt{background:#30233f}
 .danger{background:#713344}
 input,textarea,select{width:100%;padding:11px;margin:6px 0 12px;background:#21192e;color:white;border:1px solid #59436e;border-radius:9px;font:inherit}
@@ -31,11 +33,12 @@ textarea{min-height:100px}
 .row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
 .modal{position:fixed;inset:0;background:#080510dd;display:flex;align-items:end;justify-content:center;padding:8px}
 .modalbox{background:#181123;border:1px solid #59436e;border-radius:16px;padding:16px;width:100%;max-width:700px;max-height:94vh;overflow:auto}
+details{margin-top:8px}
+summary{cursor:pointer;color:#d6c1ff}
 @media(max-width:520px){.grid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-
 <header>
 <h1>🌌 StoryVerse</h1>
 <div class="muted">Seu universo. Suas histórias. Sua imaginação.</div>
@@ -50,7 +53,6 @@ textarea{min-height:100px}
 </div>
 <button onclick="wizard()">＋ Criar história</button>
 </div>
-
 <button class="alt" onclick="backup()">Exportar backup</button>
 <button class="alt" onclick="document.getElementById('file').click()">Importar backup</button>
 <input id="file" class="hidden" type="file" accept=".json" onchange="restore(event)">
@@ -60,14 +62,11 @@ textarea{min-height:100px}
 
 <section id="work" class="hidden">
 <button class="alt" onclick="goHome()">← Biblioteca</button>
-
 <div class="row">
 <h2 id="stitle"></h2>
 <button class="alt" onclick="wizard(get())">Editar escolhas</button>
 </div>
-
 <div id="smeta" class="muted"></div>
-
 <div class="tabs">
 <button class="alt" onclick="tab('overview')">Visão geral</button>
 <button class="alt" onclick="tab('characters')">Personagens</button>
@@ -75,7 +74,6 @@ textarea{min-height:100px}
 <button class="alt" onclick="tab('ai')">✨ IA narrativa</button>
 <button class="alt" onclick="tab('memory')">Memória</button>
 </div>
-
 <div id="overview" class="panel"></div>
 <div id="characters" class="panel hidden"></div>
 <div id="seasons" class="panel hidden"></div>
@@ -97,11 +95,7 @@ textarea{min-height:100px}
 <script>
 const KEY='storyverse_v2';
 let stories=[];
-
-try{
-stories=JSON.parse(localStorage.getItem(KEY)||'[]');
-}catch(e){}
-
+try{stories=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){}
 if(!Array.isArray(stories))stories=[];
 stories.forEach(norm);
 
@@ -123,24 +117,24 @@ function get(){
 return stories.find(x=>String(x.id)===String(current));
 }
 
+function el(id){
+return document.getElementById(id);
+}
+
 function esc(v){
 return String(v??'').replace(/[&<>"']/g,c=>({
-'&':'&amp;',
-'<':'&lt;',
-'>':'&gt;',
-'"':'&quot;',
-"'":'&#39;'
+'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
 }[c]));
 }
 
 function modal(t,h){
-document.getElementById('mtitle').textContent=t;
-document.getElementById('mbody').innerHTML=h;
-document.getElementById('modal').classList.remove('hidden');
+el('mtitle').textContent=t;
+el('mbody').innerHTML=h;
+el('modal').classList.remove('hidden');
 }
 
 function closeModal(){
-document.getElementById('modal').classList.add('hidden');
+el('modal').classList.add('hidden');
 }
 
 function chips(id,items,selected=[]){
@@ -155,7 +149,7 @@ return e?[...e.querySelectorAll('.on')].map(x=>x.dataset.v):[];
 }
 
 function opts(a,v){
-return a.map(x=>'<option '+(x===v?'selected':'')+'>'+x+'</option>').join('');
+return a.map(x=>'<option '+(x===v?'selected':'')+'>'+esc(x)+'</option>').join('');
 }
 
 function wizard(s){
@@ -170,397 +164,384 @@ wizardPage();
 function wizardPage(){
 let h=step===0?
 '<h3>1. Conceito</h3>'+
-'<label>Título provisório</label>'+
-'<input id="wt" value="'+esc(draft.title)+'">'+
-'<label>Ideia inicial (opcional)</label>'+
-'<textarea id="wd">'+esc(draft.description)+'</textarea>'+
+'<label>Título provisório</label><input id="wt" value="'+esc(draft.title)+'">'+
+'<label>Ideia inicial (opcional)</label><textarea id="wd">'+esc(draft.description)+'</textarea>'+
 '<label>Gêneros — escolha vários</label>'+
 chips('genres',['Romance','Aventura','Escolar','Drama','Fantasia','Ficção científica','Mistério','Suspense','Ação','Comédia','Sobrenatural','Esporte','Investigação','Histórico','Cotidiano'],draft.genres)+
 '<label>Temas</label>'+
 chips('themes',['Amizade','Família','Amadurecimento','Rivalidade','Segredos','Justiça','Descoberta','Competições','Superação'],draft.themes)
 :
 '<h3>2. Direção criativa</h3>'+
-'<label>Ambientação</label>'+
-'<select id="ws">'+opts(['Contemporânea','Escola / universidade','Cidade pequena','Grande metrópole','Reino fantástico','Espaço / futuro','Mundo pós-apocalíptico','Época histórica','Sobrenatural','A IA sugere'],draft.setting)+'</select>'+
-'<label>Época</label>'+
-'<select id="we">'+opts(['Atualidade','Anos 1980','Anos 1990','Anos 2000','Futuro próximo','Futuro distante','Idade Média','Século XIX','A definir pela IA'],draft.era)+'</select>'+
-'<label>Tom</label>'+
-chips('tone',['Leve','Emocionante','Realista','Sombrio','Acolhedor','Épico','Suspense','Bem-humorado','Intenso'],draft.tone)+
-'<label>Formato</label>'+
-'<select id="wf">'+opts(['Série episódica','Novela','Saga','Minissérie','História interativa'],draft.format)+'</select>'+
-'<label>Duração</label>'+
-'<select id="wl">'+opts(['Curto','Médio','Longo','Muito longo'],draft.length)+'</select>'+
-'<label>Público</label>'+
-'<select id="wa">'+opts(['Geral','Adolescentes','Adulto','Familiar'],draft.audience)+'</select>'+
-'<div class="notice">A IA propõe temporadas, títulos, sinopses e arcos. Você decide os rumos importantes do protagonista.</div>';
+'<label>Ambientação</label><select id="ws">'+opts(['Contemporânea','Escola / universidade','Cidade pequena','Grande metrópole','Reino fantástico','Espaço / futuro','Mundo pós-apocalíptico','Época histórica','Sobrenatural','A IA sugere'],draft.setting)+'</select>'+
+'<label>Época</label><select id="we">'+opts(['Atualidade','Anos 1980','Anos 1990','Anos 2000','Futuro próximo','Futuro distante','Idade Média','Século XIX','A definir pela IA'],draft.era)+'</select>'+
+'<label>Tom</label>'+chips('tone',['Leve','Emocionante','Realista','Sombrio','Acolhedor','Épico','Suspense','Bem-humorado','Intenso'],draft.tone)+
+'<label>Formato</label><select id="wf">'+opts(['Série episódica','Novela','Saga','Minissérie','História interativa'],draft.format)+'</select>'+
+'<label>Duração</label><select id="wl">'+opts(['Curto','Médio','Longo','Muito longo'],draft.length)+'</select>'+
+'<label>Público</label><select id="wa">'+opts(['Geral','Adolescentes','Adulto','Familiar'],draft.audience)+'</select>'+
+'<div class="notice">Você cria os personagens principais. A IA apresenta os demais naturalmente durante a história.</div>';
 
-modal(
-draft.id?'Editar universo':'Novo universo',
+modal(draft.id?'Editar universo':'Novo universo',
 h+
 '<button class="alt" onclick="step=0;wizardPage()" '+(!step?'disabled':'')+'>Voltar</button>'+
-'<button onclick="nextStep()">'+(!step?'Continuar':'Salvar universo')+'</button>'
-);
+'<button onclick="nextStep()">'+(!step?'Continuar':'Salvar universo')+'</button>');
 }
 
 function nextStep(){
 if(!step){
-draft.title=wt.value.trim()||'Novo universo';
-draft.description=wd.value.trim();
+draft.title=el('wt').value.trim()||'Novo universo';
+draft.description=el('wd').value.trim();
 draft.genres=vals('genres');
 draft.themes=vals('themes');
-
-if(!draft.genres.length)
-return alert('Selecione ao menos um gênero.');
-
+if(!draft.genres.length)return alert('Selecione ao menos um gênero.');
 step=1;
 wizardPage();
 return;
 }
-
 Object.assign(draft,{
-setting:ws.value,
-era:we.value,
-tone:vals('tone'),
-format:wf.value,
-length:wl.value,
-audience:wa.value
+setting:el('ws').value,era:el('we').value,tone:vals('tone'),
+format:el('wf').value,length:el('wl').value,audience:el('wa').value
 });
-
 let cfg={...draft};
-let s=draft.id?stories.find(x=>x.id===draft.id):null;
-
+let s=draft.id?stories.find(x=>String(x.id)===String(draft.id)):null;
 if(s){
-Object.assign(s,{
-title:draft.title,
-description:draft.description,
-genre:draft.genres.join(', '),
-config:cfg
-});
+Object.assign(s,{title:draft.title,description:draft.description,genre:draft.genres.join(', '),config:cfg});
 }else{
-s={
-id:Date.now(),
-title:draft.title,
-description:draft.description,
-genre:draft.genres.join(', '),
-config:cfg,
-characters:[],
-seasons:[],
-memoryEntries:[]
-};
+s={id:Date.now(),title:draft.title,description:draft.description,genre:draft.genres.join(', '),config:cfg,characters:[],seasons:[],memoryEntries:[]};
 stories.unshift(s);
 }
-
-save();
-closeModal();
-open(s.id);
+save();closeModal();open(s.id);
 }
 
 function homeRender(){
-let q=(document.getElementById('q').value||'').toLowerCase();
+let q=(el('q').value||'').toLowerCase();
 let a=stories.filter(s=>(s.title||'').toLowerCase().includes(q));
-
-list.innerHTML=a.length?a.map(s=>
-'<article class="card">'+
-'<h3>📘 '+esc(s.title)+'</h3>'+
+el('list').innerHTML=a.length?a.map(s=>
+'<article class="card"><h3>📘 '+esc(s.title)+'</h3>'+
 '<div class="small">'+esc((s.config.genres||[]).join(' · '))+'</div>'+
 '<p>'+esc(s.description||'Universo em desenvolvimento')+'</p>'+
 '<div class="small">'+s.characters.length+' personagens · '+s.seasons.length+' temporadas</div>'+
-'<button onclick="open('+s.id+')">Abrir universo</button>'+
-'<button class="danger" onclick="del('+s.id+')">Excluir</button>'+
-'</article>'
+'<button onclick="openStory('+s.id+')">Abrir universo</button>'+
+'<button class="danger" onclick="del('+s.id+')">Excluir</button></article>'
 ).join(''):'<p class="muted">Nenhuma história ainda. Crie seu primeiro universo!</p>';
 }
 
 function del(id){
 if(confirm('Excluir história e todo o conteúdo?')){
-stories=stories.filter(s=>s.id!==id);
-save();
-homeRender();
+stories=stories.filter(s=>String(s.id)!==String(id));save();homeRender();
 }
 }
 
-function open(id){
+function openStory(id){
 current=id;
-home.classList.add('hidden');
-work.classList.remove('hidden');
+el('home').classList.add('hidden');
+el('work').classList.remove('hidden');
 tab('overview');
 }
 
 function goHome(){
-work.classList.add('hidden');
-home.classList.remove('hidden');
+el('work').classList.add('hidden');
+el('home').classList.remove('hidden');
 homeRender();
 }
 
 function tab(t){
-['overview','characters','seasons','ai','memory'].forEach(x=>
-document.getElementById(x).classList.toggle('hidden',x!==t)
-);
+['overview','characters','seasons','ai','memory'].forEach(x=>el(x).classList.toggle('hidden',x!==t));
 render();
 }
 
 function render(){
-let s=get();
-if(!s)return;
-
-stitle.textContent='📖 '+s.title;
-smeta.textContent=(s.config.genres||[]).join(' · ');
-
-overview.innerHTML=
-'<h3>Sobre este universo</h3>'+
-'<p>'+esc(s.description)+'</p>'+
+let s=get();if(!s)return;
+el('stitle').textContent='📖 '+s.title;
+el('smeta').textContent=(s.config.genres||[]).join(' · ');
+let total=s.seasons.reduce((n,x)=>n+x.episodes.length,0);
+el('overview').innerHTML=
+'<h3>Sobre este universo</h3><p>'+esc(s.description)+'</p>'+
 '<div class="grid">'+
 '<div class="stat">'+s.characters.length+' personagens</div>'+
 '<div class="stat">'+s.seasons.length+' temporadas</div>'+
-'<div class="stat">'+s.seasons.reduce((n,x)=>n+x.episodes.length,0)+' episódios</div>'+
+'<div class="stat">'+total+' episódios</div>'+
 '<div class="stat">'+s.memoryEntries.length+' registros de memória</div>'+
 '</div>'+
-'<div class="notice">A IA planeja a narrativa; você decide os rumos importantes do protagonista.</div>'+
-'<button onclick="tab(\'ai\')">✨ Planejar com IA</button>';
-
-renderChars(s);
-renderSeasons(s);
-renderAI(s);
-renderMemory(s);
+'<div class="notice">Você controla as decisões importantes do protagonista. A IA desenvolve o mundo e os personagens secundários.</div>'+
+'<button onclick="tab(\'ai\')">✨ Planejar próximo episódio</button>';
+renderChars(s);renderSeasons(s);renderAI(s);renderMemory(s);
 }
 
 function renderChars(s){
-characters.innerHTML=
+el('characters').innerHTML=
 '<div class="row"><h3>👥 Personagens</h3><button onclick="charForm()">＋ Novo</button></div>'+
-(s.characters.length?'':'<p class="muted">Nenhum personagem ainda.</p>')+
+'<p class="small">Personagens criados por você e personagens apresentados pela IA aparecem aqui.</p>'+
+(s.characters.length?'':'<p class="muted">Nenhum personagem cadastrado ainda.</p>')+
 s.characters.map(c=>
-'<article class="card">'+
-'<b>'+esc(c.name)+'</b>'+
-'<p class="small">'+esc(c.role)+' · '+esc([c.hair,c.eyes,c.height,c.style].join(' · '))+'</p>'+
+'<article class="card"><div class="row"><b>'+esc(c.name)+'</b>'+
+(c.createdByAI?'<span class="small">Criado pela IA</span>':'<span class="small">Criado por você</span>')+'</div>'+
+'<p class="small">'+esc(c.role)+' · '+esc([c.hair,c.eyes,c.height,c.style].filter(Boolean).join(' · '))+'</p>'+
 '<p>'+esc((c.personality||[]).join(', '))+'</p>'+
+'<p class="small">'+esc(c.notes||'')+'</p>'+
 '<button class="alt" onclick="charForm('+c.id+')">Editar</button>'+
-'<button class="danger" onclick="removeChar('+c.id+')">Excluir</button>'+
-'</article>'
+'<button class="danger" onclick="removeChar('+c.id+')">Excluir</button></article>'
 ).join('');
 }
 
 function charForm(id){
 let s=get();
-let c=id?s.characters.find(x=>x.id===id):{
-name:'',
-role:'Protagonista',
-hair:'Castanho',
-eyes:'Castanhos',
-height:'Média',
-style:'Casual',
-personality:[],
-accessories:[]
+let c=id?s.characters.find(x=>String(x.id)===String(id)):{
+name:'',role:'Protagonista',hair:'Castanho',eyes:'Castanhos',height:'Média',style:'Casual',personality:[]
 };
-
+if(!c)return;
 modal(id?'Editar personagem':'Novo personagem',
-'<label>Nome</label>'+
-'<input id="cn" value="'+esc(c.name)+'">'+
-'<label>Papel</label>'+
-'<select id="cr">'+opts(['Protagonista','Coprotagonista','Antagonista','Aliado','Rival','Mentor','Secundário'],c.role)+'</select>'+
+'<label>Nome</label><input id="cn" value="'+esc(c.name)+'">'+
+'<label>Papel</label><select id="cr">'+opts(['Protagonista','Coprotagonista','Antagonista','Aliado','Rival','Mentor','Secundário'],c.role)+'</select>'+
 '<div class="grid">'+
 '<div><label>Cabelo</label><select id="ch">'+opts(['Preto','Castanho escuro','Castanho','Castanho claro','Loiro','Ruivo','Grisalho','Colorido'],c.hair)+'</select></div>'+
 '<div><label>Olhos</label><select id="ce">'+opts(['Castanhos','Mel / âmbar','Azuis','Verdes','Cinzentos','Pretos','Violeta'],c.eyes)+'</select></div>'+
 '<div><label>Altura</label><select id="ct">'+opts(['Baixa','Média','Alta','Muito alta'],c.height)+'</select></div>'+
 '<div><label>Estilo</label><select id="cs">'+opts(['Casual','Elegante','Esportivo','Alternativo','Clássico','Urbano','Uniforme','Fantasia'],c.style)+'</select></div>'+
-'</div>'+
-'<label>Personalidade</label>'+
+'</div><label>Personalidade</label>'+
 chips('pers',['Corajoso','Reservado','Extrovertido','Inteligente','Sarcástico','Gentil','Ambicioso','Impulsivo','Leal','Misterioso','Competitivo','Calmo','Teimoso','Curioso','Protetor'],c.personality)+
-'<label>Detalhes</label>'+
-'<textarea id="cnote">'+esc(c.notes||'')+'</textarea>'+
-'<button onclick="saveChar('+(id||'null')+')">Salvar personagem</button>'
-);
+'<label>Detalhes</label><textarea id="cnote">'+esc(c.notes||'')+'</textarea>'+
+'<button onclick="saveChar('+(id||'null')+')">Salvar personagem</button>');
 }
 
 function saveChar(id){
-let s=get();
-let name=cn.value.trim();
-
+let s=get(),name=el('cn').value.trim();
 if(!name)return alert('Informe o nome.');
-
-let c=id?s.characters.find(x=>x.id===id):{id:Date.now()};
-
-Object.assign(c,{
-name,
-role:cr.value,
-hair:ch.value,
-eyes:ce.value,
-height:ct.value,
-style:cs.value,
-personality:vals('pers'),
-notes:cnote.value
-});
-
+let c=id?s.characters.find(x=>String(x.id)===String(id)):{id:Date.now()};
+Object.assign(c,{name,role:el('cr').value,hair:el('ch').value,eyes:el('ce').value,height:el('ct').value,style:el('cs').value,personality:vals('pers'),notes:el('cnote').value});
 if(!id)s.characters.push(c);
-
-save();
-closeModal();
-render();
+save();closeModal();render();
 }
 
 function removeChar(id){
 if(confirm('Excluir personagem?')){
-let s=get();
-s.characters=s.characters.filter(c=>c.id!==id);
-save();
-render();
+let s=get();s.characters=s.characters.filter(c=>String(c.id)!==String(id));save();render();
 }
 }
 
 function renderSeasons(s){
-seasons.innerHTML=
-'<h3>🎬 Temporadas e episódios</h3>'+
-(s.seasons.length?'':'<p class="muted">O planejamento será criado pela IA.</p>')+
+el('seasons').innerHTML='<h3>🎬 Temporadas e episódios</h3>'+
+(s.seasons.length?'':'<p class="muted">Ainda não há episódios. Use a Central de IA para começar.</p>')+
 s.seasons.map((se,i)=>
-'<article class="card">'+
-'<h3>Temporada '+(i+1)+': '+esc(se.title)+'</h3>'+
+'<article class="card"><h3>Temporada '+(i+1)+': '+esc(se.title)+'</h3>'+
 '<p>'+esc(se.synopsis)+'</p>'+
 se.episodes.map((ep,j)=>
-'<div class="episode">'+
-'<b>E'+(j+1)+': '+esc(ep.title)+'</b>'+
+'<div class="episode"><b>E'+(j+1)+': '+esc(ep.title)+'</b>'+
 '<p>'+esc(ep.synopsis)+'</p>'+
-'<details><summary>Começo, meio e fim</summary>'+
+'<details><summary>Ver episódio completo</summary>'+
 '<p><b>Começo:</b> '+esc(ep.beginning)+'</p>'+
 '<p><b>Meio:</b> '+esc(ep.middle)+'</p>'+
 '<p><b>Fim:</b> '+esc(ep.ending)+'</p>'+
-'<p><b>Gancho:</b> '+esc(ep.hook)+'</p>'+
-'</details></div>'
+'<p><b>Gancho:</b> '+esc(ep.hook)+'</p></details></div>'
 ).join('')+'</article>'
 ).join('');
 }
 
 function briefing(s){
-return 'Você é roteirista do StoryVerse. Crie temporadas e episódios completos, sem exigir que o usuário escreva títulos ou sinopses. Preserve continuidade e deixe decisões importantes do protagonista ao usuário.\n'+
-'UNIVERSO: '+s.title+'\n'+
-'Premissa: '+s.description+'\n'+
-'Gêneros: '+(s.config.genres||[]).join(', ')+'\n'+
-'Temas: '+(s.config.themes||[]).join(', ')+'\n'+
-'Ambientação: '+s.config.setting+'\n'+
-'Época: '+s.config.era+'\n'+
-'Tom: '+(s.config.tone||[]).join(', ')+'\n'+
-'Formato: '+s.config.format+'\n'+
-'Elenco: '+JSON.stringify(s.characters)+'\n'+
-'Memória: '+JSON.stringify(s.memoryEntries)+'\n'+
-'Gere uma primeira temporada completa. Retorne SOMENTE JSON válido neste formato: {"seasonTitle":"...","seasonSynopsis":"...","episodes":[{"title":"...","synopsis":"...","beginning":"...","middle":"...","ending":"...","hook":"..."}],"suggestedCharacters":[{"name":"...","role":"...","personality":["..."],"notes":"..."}],"memoryEntries":[{"date":"...","event":"...","whoKnows":["..."],"pending":"..."}]}.';
+let season=s.seasons[s.seasons.length-1];
+let episodeCount=season?season.episodes.length:0;
+let nextEpisode=episodeCount+1;
+return `Você é o roteirista e narrador do StoryVerse.
+Crie ou continue uma história interativa, um episódio por vez.
+
+UNIVERSO: ${s.title}
+PREMISSA: ${s.description}
+GÊNEROS: ${(s.config.genres||[]).join(', ')}
+TEMAS: ${(s.config.themes||[]).join(', ')}
+AMBIENTAÇÃO: ${s.config.setting||'A definir'}
+ÉPOCA: ${s.config.era||'A definir'}
+TOM: ${(s.config.tone||[]).join(', ')}
+FORMATO: ${s.config.format||'Série episódica'}
+
+PERSONAGENS PRINCIPAIS E SECUNDÁRIOS JÁ CONHECIDOS:
+${JSON.stringify(s.characters,null,2)}
+
+TEMPORADAS E EPISÓDIOS ANTERIORES:
+${JSON.stringify(s.seasons,null,2)}
+
+MEMÓRIA NARRATIVA:
+${JSON.stringify(s.memoryEntries,null,2)}
+
+PRÓXIMO EPISÓDIO: ${nextEpisode}
+
+REGRAS:
+1. Crie somente um episódio por vez.
+2. Crie personagens secundários conforme a história precisar deles. Não invente todo o elenco antecipadamente.
+3. Personagens novos precisam ter nome, aparência, personalidade, passado, objetivos e relações coerentes.
+4. Não recrie personagens existentes com nomes diferentes.
+5. Preserve personalidades, relações, cronologia e consequências.
+6. Personagens só sabem aquilo que presenciaram, ouviram ou descobriram.
+7. Não decida ações importantes pelo protagonista. Quando houver uma decisão importante, pare a cena e faça uma pergunta ao usuário.
+8. Escreva cenas desenvolvidas, diálogos naturais e personagens secundários ativos.
+9. O episódio precisa ter começo, desenvolvimento, clímax e gancho.
+10. Registre os fatos importantes e quem sabe de cada informação.
+11. Não avance para outro episódio sem a participação do usuário.
+12. Se for o primeiro episódio, crie uma primeira temporada e apresente o universo naturalmente.
+
+RETORNE SOMENTE JSON VÁLIDO:
+{
+ "seasonTitle":"Nome da temporada",
+ "seasonSynopsis":"Sinopse da temporada",
+ "episode":{
+  "title":"Título do episódio",
+  "synopsis":"Sinopse",
+  "beginning":"Começo desenvolvido",
+  "middle":"Desenvolvimento desenvolvido",
+  "ending":"Clímax e encerramento",
+  "hook":"Gancho final"
+ },
+ "newCharacters":[
+  {
+   "name":"Nome",
+   "role":"Papel",
+   "appearance":"Aparência",
+   "personality":["Traço 1","Traço 2"],
+   "notes":"Passado e objetivos",
+   "relationships":"Relações"
+  }
+ ],
+ "memoryEntries":[
+  {
+   "date":"Episódio ou momento",
+   "event":"Acontecimento",
+   "whoKnows":["Quem sabe"],
+   "pending":"Consequência ou ponta pendente"
+  }
+ ]
+}`;
 }
 
 function renderAI(s){
-ai.innerHTML=
+let total=s.seasons.reduce((n,x)=>n+x.episodes.length,0);
+el('ai').innerHTML=
 '<h3>✨ Central de IA narrativa</h3>'+
-'<div class="notice"><b>Integração assistida.</b> O site prepara um briefing personalizado para o ChatGPT. A geração automática dentro do site ainda exige um provedor de IA e servidor seguro. Nunca coloque chaves secretas neste código público.</div>'+
-'<button onclick="copyBrief()">Copiar briefing</button>'+
+'<div class="notice"><b>Criação progressiva.</b> Gere um episódio por vez. A IA poderá introduzir personagens novos conforme a história avançar.</div>'+
+'<div class="stat">📺 Episódios registrados: '+total+'</div>'+
+'<p>Copie o briefing, abra o ChatGPT, envie o texto e peça o episódio. Depois, cole a resposta JSON abaixo.</p>'+
+'<button onclick="copyBrief()">Copiar briefing do próximo episódio</button>'+
 '<button class="alt" onclick="downloadBrief()">Baixar briefing</button>'+
-'<label>Cole abaixo o JSON produzido pela IA</label>'+
+'<label>Resposta JSON da IA</label>'+
 '<textarea id="answer" placeholder="Cole aqui a resposta JSON completa."></textarea>'+
-'<button onclick="applyPlan()">Importar temporada e memória</button>';
+'<button onclick="applyPlan()">Importar episódio, personagens e memória</button>'+
+'<p class="small">A conversa com a IA ainda acontece no ChatGPT. A conexão direta dentro do site será uma etapa futura.</p>';
 }
 
 function copyBrief(){
 let t=briefing(get());
-navigator.clipboard?.writeText(t)
-.then(()=>alert('Briefing copiado. Abra o ChatGPT, cole e envie.'))
+if(!navigator.clipboard?.writeText){fallbackCopy(t);return}
+navigator.clipboard.writeText(t)
+.then(()=>alert('Briefing copiado! Abra o ChatGPT, cole e envie.'))
 .catch(()=>fallbackCopy(t));
 }
 
 function fallbackCopy(t){
 let x=document.createElement('textarea');
-x.value=t;
-document.body.appendChild(x);
-x.select();
-document.execCommand('copy');
-x.remove();
+x.value=t;document.body.appendChild(x);x.select();
+document.execCommand('copy');x.remove();
 alert('Briefing copiado.');
 }
 
 function downloadBrief(){
-download(new Blob([briefing(get())],{type:'text/plain'}),'storyverse-briefing.txt');
+download(new Blob([briefing(get())],{type:'text/plain'}),'storyverse-proximo-episodio.txt');
 }
 
 function applyPlan(){
 let s=get();
-
 try{
-let d=JSON.parse(answer.value);
-if(!Array.isArray(d.episodes))throw 0;
+let raw=el('answer').value.trim();
+let d=JSON.parse(raw);
+if(!d.episode||!d.episode.title)throw new Error('Episódio ausente');
 
-s.seasons.push({
+let season=s.seasons[s.seasons.length-1];
+if(!season||season.id!==s.activeSeasonId){
+season={
 id:Date.now(),
 title:d.seasonTitle||'Temporada '+(s.seasons.length+1),
 synopsis:d.seasonSynopsis||'',
-episodes:d.episodes
+episodes:[]
+};
+s.seasons.push(season);
+s.activeSeasonId=season.id;
+}else{
+if(d.seasonTitle)season.title=d.seasonTitle;
+if(d.seasonSynopsis)season.synopsis=d.seasonSynopsis;
+}
+
+season.episodes.push({
+id:Date.now(),
+title:d.episode.title,
+synopsis:d.episode.synopsis||'',
+beginning:d.episode.beginning||'',
+middle:d.episode.middle||'',
+ending:d.episode.ending||'',
+hook:d.episode.hook||''
+});
+
+(d.newCharacters||[]).forEach(c=>{
+let exists=s.characters.some(x=>
+String(x.name||'').trim().toLowerCase()===String(c.name||'').trim().toLowerCase()
+);
+if(!exists&&c.name){
+s.characters.push({
+id:Date.now()+Math.random(),
+name:c.name,
+role:c.role||'Secundário',
+hair:'Não definido',
+eyes:'Não definido',
+height:'Não definido',
+style:'Não definido',
+personality:Array.isArray(c.personality)?c.personality:[],
+notes:[c.appearance||'',c.notes||'',c.relationships||''].filter(Boolean).join('\n'),
+createdByAI:true
+});
+}
 });
 
 (d.memoryEntries||[]).forEach(x=>s.memoryEntries.push(x));
-
-(d.suggestedCharacters||[]).forEach(c=>{
-if(!s.characters.some(x=>x.name===c.name))
-s.characters.push({id:Date.now()+Math.random(),...c});
-});
-
 save();
 tab('seasons');
-alert('Temporada e memória importadas!');
-
+alert('Episódio, personagens e memória importados!');
 }catch(e){
-alert('JSON inválido. Peça ao ChatGPT para retornar somente o JSON solicitado.');
+alert('Não foi possível importar. Confira se a resposta é um JSON válido no formato solicitado.');
 }
 }
 
 function renderMemory(s){
-memory.innerHTML=
+el('memory').innerHTML=
 '<h3>🧠 Memória narrativa</h3>'+
-'<div class="notice">A memória é alimentada pelos planejamentos importados e registra eventos, quem sabe de cada fato e pontas pendentes.</div>'+
-(s.memoryEntries.length?'':'<p class="muted">A memória será criada com o primeiro planejamento.</p>')+
+'<div class="notice">A memória registra acontecimentos, quem sabe de cada fato e pontas pendentes. Ela é enviada à IA nos próximos briefings.</div>'+
+(s.memoryEntries.length?'':'<p class="muted">A memória será preenchida após o primeiro episódio.</p>')+
 s.memoryEntries.map(m=>
-'<article class="card">'+
-'<div class="small">'+esc(m.date)+'</div>'+
+'<article class="card"><div class="small">'+esc(m.date)+'</div>'+
 '<p>'+esc(m.event)+'</p>'+
 '<div class="small">Quem sabe: '+esc((m.whoKnows||[]).join(', '))+'</div>'+
-'<div class="small">Pendente: '+esc(m.pending)+'</div>'+
-'</article>'
+'<div class="small">Pendente: '+esc(m.pending)+'</div></article>'
 ).join('');
 }
 
 function download(blob,name){
 let u=URL.createObjectURL(blob);
 let a=document.createElement('a');
-a.href=u;
-a.download=name;
-a.click();
+a.href=u;a.download=name;a.click();
 setTimeout(()=>URL.revokeObjectURL(u),1000);
 }
 
 function backup(){
-download(
-new Blob([JSON.stringify(stories,null,2)],{type:'application/json'}),
-'storyverse-backup.json'
-);
+download(new Blob([JSON.stringify(stories,null,2)],{type:'application/json'}),'storyverse-backup.json');
 }
 
 function restore(e){
-let f=e.target.files[0];
-if(!f)return;
-
+let f=e.target.files[0];if(!f)return;
 let r=new FileReader();
-
 r.onload=()=>{
 try{
 let d=JSON.parse(r.result);
 if(!Array.isArray(d))throw 0;
-
 if(confirm('Substituir a biblioteca atual pelo backup?')){
-stories=d;
-stories.forEach(norm);
-save();
-homeRender();
-alert('Backup importado.');
+stories=d;stories.forEach(norm);save();homeRender();alert('Backup importado.');
 }
-}catch(x){
-alert('Arquivo inválido.');
-}
+}catch(x){alert('Arquivo inválido.')}
 };
-
-r.readAsText(f);
-e.target.value='';
+r.readAsText(f);e.target.value='';
 }
 
 save();
